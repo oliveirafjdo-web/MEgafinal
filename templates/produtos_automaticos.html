@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Vincular Produtos - Mercado Livre{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📦 Produtos Criados Automaticamente</h2>
+    <p class="text-muted">Produtos importados do Mercado Livre que não foram encontrados no estoque. Vincule-os aos produtos reais ou delete-os.</p>
+
+    {% if produtos_automaticos %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Título do Produto</th>
+                        <th>Total de Vendas</th>
+                        <th>Estoque</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos_automaticos %}
+                        <tr>
+                            <td>
+                                <small>{{ produto.nome[:60] }}{% if produto.nome|length > 60 %}...{% endif %}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ produto.total_vendas }} vendas</span>
+                            </td>
+                            <td>{{ produto.estoque_atual }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#vincularModal{{ produto.id }}">
+                                    🔗 Vincular
+                                </button>
+                                <form method="POST" action="/deletar_produto_automatico/{{ produto.id }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Deletar este produto e suas vendas?')">
+                                        🗑️ Deletar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <!-- Modal de Vinculação -->
+                        <div class="modal fade" id="vincularModal{{ produto.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            Vincular a Produto Existente
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p><strong>Produto ML:</strong> {{ produto.nome[:80] }}</p>
+                                        <p class="text-muted">Selecione um produto do estoque para vincular:</p>
+                                        
+                                        <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                                            {% for prod_real in produtos_existentes %}
+                                                <a href="/vincular_produto/{{ produto.id }}/{{ prod_real.id }}" 
+                                                   class="list-group-item list-group-item-action"
+                                                   onclick="return confirm('Vincular a este produto?')">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>{{ prod_real.nome }}</strong>
+                                                            <br>
+                                                            <small class="text-muted">Estoque: {{ prod_real.estoque_atual }}</small>
+                                                        </div>
+                                                        <span class="badge bg-success">Vincular</span>
+                                                    </div>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-success">
+            ✅ Nenhum produto automático pendente! Todos foram vinculados ou o banco está vazio.
+        </div>
+    {% endif %}
+
+    <hr>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h5>📋 Como funciona:</h5>
+            <ul>
+                <li>Quando uma venda é importada do ML e o produto não existe no banco, é criado automaticamente</li>
+                <li>Use a opção <strong>Vincular</strong> para associar ao produto real do estoque</li>
+                <li>Use <strong>Deletar</strong> para remover produtos desnecessários (remove também as vendas)</li>
+                <li>Após vincular, as futuras vendas serão associadas ao produto real</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <strong>💡 Dica:</strong> Mantenha seus produtos cadastrados no estoque com nomes descritivos para que o sistema encontre automaticamente nas importações futuras.
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/produtos" class="btn btn-secondary">← Voltar para Produtos</a>
+    </div>
+</div>
+
+<style>
+    .list-group-item-action:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
